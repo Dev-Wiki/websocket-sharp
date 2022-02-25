@@ -45,6 +45,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -52,6 +53,11 @@ using System.Text;
 using System.Threading;
 using WebSocketSharp.Net;
 using WebSocketSharp.Net.WebSockets;
+using AuthenticationSchemes = WebSocketSharp.Net.AuthenticationSchemes;
+using Cookie = WebSocketSharp.Net.Cookie;
+using CookieCollection = WebSocketSharp.Net.CookieCollection;
+using HttpStatusCode = WebSocketSharp.Net.HttpStatusCode;
+using NetworkCredential = WebSocketSharp.Net.NetworkCredential;
 
 namespace WebSocketSharp
 {
@@ -796,7 +802,7 @@ namespace WebSocketSharp
     /// <summary>
     /// Occurs when the WebSocket connection has been established.
     /// </summary>
-    public event EventHandler OnOpen;
+    public event EventHandler<OpenEventArgs> OnOpen;
 
     #endregion
 
@@ -1533,8 +1539,11 @@ namespace WebSocketSharp
     {
       _inMessage = true;
       startReceiving ();
-      try {
-        OnOpen.Emit (this, EventArgs.Empty);
+      try
+      {
+        var local = (IPEndPoint) _tcpClient.Client.LocalEndPoint;
+        var remote = (IPEndPoint) _tcpClient.Client.RemoteEndPoint;
+        OnOpen.Emit (this, new OpenEventArgs(local.Address.ToString(), remote.Address.ToString()));
       }
       catch (Exception ex) {
         _logger.Error (ex.ToString ());
